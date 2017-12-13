@@ -11,13 +11,20 @@
   returns the file descriptor for the upstream pipe.
   =========================*/
 int server_handshake(int *to_client) {
-  int wkp = mkfifo("server", O_RDONLY);
+  unlink("serverf");
+  int fif = mkfifo("serverf", 0666);
+  printf("%d\n",fif);
+  printf("waiting for client...\n");
+  int wkp = open("serverf",O_RDONLY);
   char fifoname[256];
   read(wkp,fifoname,HANDSHAKE_BUFFER_SIZE);
+  close(wkp);
+  printf("received private fifo...\n");  
   int private = open(fifoname,O_WRONLY);
   char * ack = ACK;
-  remove("server");
+  remove("serverf");
   write(private,ack,HANDSHAKE_BUFFER_SIZE);
+  close(private);
   printf("Connection established\n");
   
   return wkp;
@@ -34,20 +41,29 @@ int server_handshake(int *to_client) {
   returns the file descriptor for the downstream pipe.
   =========================*/
 int client_handshake(int *to_server) {
-  char * fifoname = "private";
-  int private = mkfifo(fifoname, 0666);
-  int wkp = open("server",O_WRONLY);
-  write(wkp,fifoname,HANDSHAKE_BUFFER_SIZE);
+  unlink("privatef");
+  int fif = mkfifo("privatef", 0666);
+  printf("%d\n",fif);
+  printf("opening private fifo...\n");  
+  int private = open("privatef",O_RDONLY);
+  printf("opening wkp...\n");
+  int wkp = open("serverf",O_WRONLY);
+  printf("sending fifoname...\n");
+  write(wkp,"privatef",HANDSHAKE_BUFFER_SIZE);
+  close(wkp);
   char ack[256];
   read(private,ack,HANDSHAKE_BUFFER_SIZE);
+  close(private);
   if(!strcmp(ack,ACK)){
-    remove("private");
+    remove("privatef");
   }
   else{
     printf("Error: acknowledgement failed.\n");
     exit(0);
   }
+  wkp = open("serverf",O_WRONLY);
   write(wkp,"Connected!",BUFFER_SIZE);
+  close(wkp);
   printf("Connection established\n");
   return private;
 }
