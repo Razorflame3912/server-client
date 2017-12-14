@@ -10,21 +10,23 @@
 
   returns the file descriptor for the upstream pipe.
   =========================*/
-int server_handshake(int *to_client) {
+int server_handshake(int * to_client) {
   unlink("serverf");
   int fif = mkfifo("serverf", 0666);
   printf("%d\n",fif);
+  
   printf("waiting for client...\n");
   int wkp = open("serverf",O_RDONLY);
   char fifoname[256];
   read(wkp,fifoname,HANDSHAKE_BUFFER_SIZE);
   close(wkp);
-  printf("received private fifo...\n");  
-  int private = open(fifoname,O_WRONLY);
+  printf("received private fifo...\n");
+  
+  to_client = open(fifoname,O_WRONLY);
   char * ack = ACK;
   remove("serverf");
-  write(private,ack,HANDSHAKE_BUFFER_SIZE);
-  close(private);
+  write(*to_client,ack,HANDSHAKE_BUFFER_SIZE);
+  close(*to_client);
   printf("Connection established\n");
   
   return wkp;
@@ -40,17 +42,23 @@ int server_handshake(int *to_client) {
 
   returns the file descriptor for the downstream pipe.
   =========================*/
-int client_handshake(int *to_server) {
+int client_handshake(int * to_server) {
+  
   unlink("privatef");
   int fif = mkfifo("privatef", 0666);
   printf("%d\n",fif);
+  
   printf("opening private fifo...\n");  
   int private = open("privatef",O_RDONLY);
-  printf("opening wkp...\n");
-  int wkp = open("serverf",O_WRONLY);
+  printf( "Finished opening private fifo.\n" );
+  
+  printf("opening to_server...\n");
+  to_server = open("serverf",O_WRONLY);
+  
   printf("sending fifoname...\n");
-  write(wkp,"privatef",HANDSHAKE_BUFFER_SIZE);
-  close(wkp);
+  write(*to_server,"privatef",HANDSHAKE_BUFFER_SIZE);
+  close(*to_server);
+  
   char ack[256];
   read(private,ack,HANDSHAKE_BUFFER_SIZE);
   close(private);
@@ -61,9 +69,10 @@ int client_handshake(int *to_server) {
     printf("Error: acknowledgement failed.\n");
     exit(0);
   }
-  wkp = open("serverf",O_WRONLY);
-  write(wkp,"Connected!",BUFFER_SIZE);
-  close(wkp);
+  to_server = open("serverf",O_WRONLY);
+  write(*to_server,"Connected!",BUFFER_SIZE);
+  close(*to_server);
   printf("Connection established\n");
+  
   return private;
 }
