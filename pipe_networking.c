@@ -19,14 +19,16 @@ int server_handshake(int * to_client) {
   int wkp = open("serverf",O_RDONLY);
   char fifoname[256];
   read(wkp,fifoname,HANDSHAKE_BUFFER_SIZE);
-  close(wkp);
-  printf("received private fifo...\n");
+  printf("received private fifo... %s\n",fifoname);
   
-  to_client = open(fifoname,O_WRONLY);
+  *to_client = open(fifoname,O_WRONLY);
   char * ack = ACK;
   remove("serverf");
+  printf("Sending acknowledgement message...\n");
   write(*to_client,ack,HANDSHAKE_BUFFER_SIZE);
-  close(*to_client);
+  char est[BUFFER_SIZE];
+  read(wkp,est,BUFFER_SIZE);
+  printf("client says: %s\n",est);
   printf("Connection established\n");
   
   return wkp;
@@ -48,19 +50,21 @@ int client_handshake(int * to_server) {
   int fif = mkfifo("privatef", 0666);
   printf("%d\n",fif);
   
+  printf("opening to_server...\n");
+  *to_server = open("serverf",O_WRONLY);
+
+  printf("sending fifoname...\n");
+  write(*to_server,"privatef",HANDSHAKE_BUFFER_SIZE);
+
   printf("opening private fifo...\n");  
   int private = open("privatef",O_RDONLY);
   printf( "Finished opening private fifo.\n" );
   
-  printf("opening to_server...\n");
-  to_server = open("serverf",O_WRONLY);
   
-  printf("sending fifoname...\n");
-  write(*to_server,"privatef",HANDSHAKE_BUFFER_SIZE);
-  close(*to_server);
   
   char ack[256];
   read(private,ack,HANDSHAKE_BUFFER_SIZE);
+  printf("Acknowledgement message: %s\n",ack);
   close(private);
   if(!strcmp(ack,ACK)){
     remove("privatef");
@@ -69,9 +73,7 @@ int client_handshake(int * to_server) {
     printf("Error: acknowledgement failed.\n");
     exit(0);
   }
-  to_server = open("serverf",O_WRONLY);
   write(*to_server,"Connected!",BUFFER_SIZE);
-  close(*to_server);
   printf("Connection established\n");
   
   return private;
