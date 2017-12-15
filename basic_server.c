@@ -10,10 +10,10 @@ int main() {
   
   printf("Server->Client FDS: %d\n",to_client);
   printf("Client->Server FDS: %d\n",from_client);
+  char clienttext[BUFFER_SIZE];
   
   while(1){
     
-    char clienttext[BUFFER_SIZE];
     read(from_client,clienttext,BUFFER_SIZE);
     printf("Received [%s] from client\n",clienttext);
 
@@ -28,8 +28,8 @@ int main() {
 
     // Bad file descriptor?
     int w = write(to_client,clienttext,BUFFER_SIZE);
-    
-    printf("Write errno? = %d\n",w);
+    char error[8];
+    printf("Write errno? = %d\n",errno);
     printf("Wrote [%s] to pipe\n",clienttext);
   }
 }

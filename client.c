@@ -11,18 +11,18 @@ int main() {
   printf("Client->Server FDS: %d\n",to_server);
   printf("Server->Client FDS:%d\n",from_server);
   
+  char input[BUFFER_SIZE];
   while(1){
     
-    char input[BUFFER_SIZE];
     printf("Input: ");
-    scanf("%s",input);
+    scanf(" %[^\t\n]s",input);
     write(to_server,input,BUFFER_SIZE);
     
-    char output[BUFFER_SIZE];
-    int r = read(from_server,output,BUFFER_SIZE);
+    int r = read(from_server,input,BUFFER_SIZE);
 
-    // printf( "Read errno? = %d\n", r );
-    printf("Output from server: %s\n",output);
+    char error[8];
+    printf("Read errno? = %d\n", errno );
+    printf("Output from server: %s\n",input);
     }
   
 }

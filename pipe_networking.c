@@ -16,13 +16,13 @@ int server_handshake(int * to_client) {
   // printf("%d\n",fif);
   
   printf("Waiting for client...\n");
-  int wkp = open("serverf",O_RDONLY);
-  char fifoname[256];
-  read(wkp,fifoname,HANDSHAKE_BUFFER_SIZE);
+  int wkp = open("serverf",O_RDONLY,0);
+  char fifoname[HANDSHAKE_BUFFER_SIZE];
+  read(wkp,fifoname,sizeof(fifoname));
   printf("Received private fifo... %s\n",fifoname);
 
   // POTENTIALLY PROBLEMATIC RDWR - Should work with WRONLY but when set to RDWR, the server actually loops.  With WRONLY, it only loops once.
-  *to_client = open(fifoname,O_RDWR);
+  *to_client = open(fifoname,O_WRONLY,0);
   char * ack = ACK;
   remove("serverf");
   printf("Sending acknowledgement message...\n");
@@ -64,7 +64,6 @@ int client_handshake(int * to_server) {
   char ack[256];
   read(private,ack,HANDSHAKE_BUFFER_SIZE);
   printf("Acknowledgement message: %s\n",ack);
-  close(private);
   if(!strcmp(ack,ACK)){
     remove("privatef");
   }
